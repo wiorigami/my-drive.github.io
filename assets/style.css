@@ -1,0 +1,24 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f8f9fa;
+  padding: 2em;
+}
+
+h1 {
+  font-size: 1.5em;
+  margin-bottom: 1em;
+}
+
+ul.tree {
+  list-style: none;
+  padding-left: 1em;
+  border-left: 2px solid #ccc;
+}
+
+li {
+  margin: 0.5em 0;
+}
+
+.file-icon {
+  margin-right: 0.5em;
+}

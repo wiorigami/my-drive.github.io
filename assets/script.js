@@ -1,18 +1,26 @@
-// 模拟文件结构（你也可以用递归自动读取）
-const files = [
-  { name: "example.pdf", type: "file" },
-  { name: "photo.jpg", type: "file" },
-  { name: "archive.zip", type: "file" }
-];
+fetch('assets/files.json')
+  .then(res => res.json())
+  .then(data => {
+    const container = document.getElementById('file-tree');
 
-const tree = document.createElement("ul");
-tree.classList.add("tree");
+    function createTree(items, basePath = 'files/') {
+      const ul = document.createElement('ul');
+      for (const item of items) {
+        const li = document.createElement('li');
+        if (item.type === 'folder') {
+          li.innerHTML = `<span class="folder-icon">📁</span> ${item.name}`;
+          li.appendChild(createTree(item.children, basePath + item.name + '/'));
+        } else {
+          const link = document.createElement('a');
+          link.href = basePath + item.name;
+          link.textContent = item.name;
+          link.target = "_blank";
+          li.appendChild(link);
+        }
+        ul.appendChild(li);
+      }
+      return ul;
+    }
 
-files.forEach(file => {
-  const li = document.createElement("li");
-  const icon = file.type === "file" ? "📄" : "📁"; // 可替换为 SVG 图标
-  li.innerHTML = `<span class="file-icon">${icon}</span><a href="files/${file.name}" download>${file.name}</a>`;
-  tree.appendChild(li);
-});
-
-document.getElementById("file-tree").appendChild(tree);
+    container.appendChild(createTree(data));
+  });

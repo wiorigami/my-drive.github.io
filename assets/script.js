@@ -30,7 +30,7 @@ function createTree(items, basePath = 'files/') {
       const link = document.createElement('a');
       link.href = basePath + item.name;
       link.textContent = ' ' + item.name;
-      link.target = '_blank';
+      link.setAttribute('download', ''); // 直接下载
 
       li.appendChild(icon);
       li.appendChild(link);

@@ -1,24 +1,30 @@
 body {
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f8f9fa;
-  padding: 2em;
+  font-family: system-ui, sans-serif;
+  padding: 20px;
+  background: #f9f9f9;
+  color: #333;
 }
-
-h1 {
-  font-size: 1.5em;
-  margin-bottom: 1em;
-}
-
-ul.tree {
+ul {
   list-style: none;
-  padding-left: 1em;
-  border-left: 2px solid #ccc;
+  padding-left: 20px;
 }
-
 li {
-  margin: 0.5em 0;
+  margin: 4px 0;
 }
-
-.file-icon {
-  margin-right: 0.5em;
+.folder-icon {
+  color: #007aff; /* iOS 文件夹蓝 */
+  margin-right: 6px;
+}
+a {
+  color: #333;
+  text-decoration: none;
+}
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #1e1e1e;
+    color: #eee;
+  }
+  a {
+    color: #8ab4f8;
+  }
 }

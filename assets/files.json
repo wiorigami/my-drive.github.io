@@ -1,0 +1,10 @@
+[
+  {
+    "type": "file",
+    "name": "example.txt"
+  },
+  {
+    "type": "file",
+    "name": "index.html"
+  }
+]

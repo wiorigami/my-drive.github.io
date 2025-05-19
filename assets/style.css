@@ -34,3 +34,22 @@ a {
   vertical-align: middle;
   margin-right: 6px;
 }
+.tree {
+  list-style: none;
+  padding-left: 1em;
+}
+
+.tree li {
+  margin: 0.25em 0;
+  line-height: 1.5;
+}
+
+.tree .toggle {
+  cursor: pointer;
+  margin-right: 0.4em;
+  user-select: none;
+}
+
+.tree .children.hidden {
+  display: none;
+}

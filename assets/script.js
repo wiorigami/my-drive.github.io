@@ -57,3 +57,7 @@ function createTree(data, path = 'files') {
 
   return ul;
 }
+function getIconForFile(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  return 'assets/icons/' + (ext + '.png');
+}

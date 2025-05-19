@@ -1,63 +1,120 @@
-function createTree(data, path = 'files') {
-  const ul = document.createElement('ul');
-  ul.classList.add('tree');
+async function fetchFiles() {
+  const res = await fetch('files.json');
+  return await res.json();
+}
 
-  data.forEach(item => {
+function getIconForFile(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  return `assets/icons/${ext}.png`;
+}
+
+function createIcon(path, isFolder) {
+  const icon = document.createElement('img');
+  icon.src = isFolder ? 'assets/icons/folder.png' : getIconForFile(path);
+  icon.onerror = () => {
+    icon.src = 'assets/icons/file.png';
+  };
+  icon.style.width = '16px';
+  icon.style.marginRight = '5px';
+  icon.style.verticalAlign = 'middle';
+  return icon;
+}
+
+function createTree(container, files, basePath = '') {
+  const ul = document.createElement('ul');
+
+  files.forEach(item => {
     const li = document.createElement('li');
+    const span = document.createElement('span');
+    const icon = createIcon(item.name, item.type === 'folder');
+
+    const triangle = document.createElement('span');
+    triangle.textContent = item.type === 'folder' ? '▶' : '';
+    triangle.style.cursor = 'pointer';
+    triangle.style.marginRight = '5px';
+
+    triangle.onclick = () => {
+      if (triangle.textContent === '▶') {
+        triangle.textContent = '▼';
+        childContainer.style.display = 'block';
+      } else {
+        triangle.textContent = '▶';
+        childContainer.style.display = 'none';
+      }
+    };
+
+    span.textContent = item.name;
+    span.style.cursor = 'pointer';
 
     if (item.type === 'folder') {
-      li.classList.add('folder');
-
-      const toggle = document.createElement('span');
-      toggle.classList.add('toggle');
-      toggle.textContent = '▶';
-
-      const icon = document.createElement('img');
-      icon.src = 'assets/icons/folder.png';
-      icon.style.width = '16px';
-      icon.style.verticalAlign = 'middle';
-      icon.style.marginRight = '4px';
-
-      const name = document.createElement('span');
-      name.textContent = item.name;
-      name.classList.add('name');
-
-      const children = createTree(item.children, path + '/' + item.name);
-      children.classList.add('children', 'hidden');
-
-      toggle.onclick = () => {
-        const expanded = toggle.textContent === '▼';
-        toggle.textContent = expanded ? '▶' : '▼';
-        children.classList.toggle('hidden');
-      };
-
-      li.appendChild(toggle);
-      li.appendChild(icon);
-      li.appendChild(name);
-      li.appendChild(children);
-
-    } else if (item.type === 'file') {
-      const icon = document.createElement('img');
-      icon.src = getIconForFile(item.name); // 你可能已有此函数
-      icon.style.width = '16px';
-      icon.style.verticalAlign = 'middle';
-      icon.style.marginRight = '4px';
-
-      const link = document.createElement('a');
-      link.href = path + '/' + item.name;
-      link.textContent = item.name;
-      link.setAttribute('download', '');
-
-      li.appendChild(icon);
-      li.appendChild(link);
+      span.onclick = () => downloadFolder(`${basePath}${item.name}/`);
+    } else {
+      span.onclick = () => window.open(`files/${basePath}${item.name}`, '_blank');
     }
 
+    const childContainer = document.createElement('div');
+    childContainer.style.display = 'none';
+    if (item.type === 'folder' && item.children) {
+      createTree(childContainer, item.children, `${basePath}${item.name}/`);
+    }
+
+    li.appendChild(triangle);
+    li.appendChild(icon);
+    li.appendChild(span);
+    li.appendChild(childContainer);
     ul.appendChild(li);
   });
 
-  return ul;
+  container.appendChild(ul);
 }
-function getIconForFile(filename) {
-  const ext = filename.split('.').pop().toLowerCase();
-  return 'assets/icons/' + (ext + '.png');
+
+async function downloadFolder(folderPath) {
+  const zip = new JSZip();
+  await addFolderToZip(zip, folderPath);
+  zip.generateAsync({ type: 'blob' }).then(function(content) {
+    saveAs(content, folderPath.split('/').filter(Boolean).pop() + '.zip');
+  });
 }
+
+async function addFolderToZip(zipObj, folderPath) {
+  const response = await fetch('files.json');
+  const structure = await response.json();
+  const folderData = findFolderData(structure, folderPath);
+  if (!folderData) return;
+
+  const folderZip = zipObj.folder(folderPath.split('/').filter(Boolean).pop());
+
+  async function recurse(current, base) {
+    for (let item of current) {
+      const fullPath = base + item.name;
+      if (item.type === 'folder') {
+        const childFolder = folderZip.folder(item.name);
+        if (item.children) await recurse(item.children, fullPath + '/');
+      } else {
+        const fileUrl = `files/${folderPath}${item.name}`;
+        const res = await fetch(fileUrl);
+        const blob = await res.blob();
+        folderZip.file(item.name, blob);
+      }
+    }
+  }
+
+  await recurse(folderData.children, '');
+}
+
+function findFolderData(tree, path) {
+  const parts = path.split('/').filter(Boolean);
+  let current = tree;
+  for (let part of parts) {
+    const next = current.find(item => item.name === part && item.type === 'folder');
+    if (!next) return null;
+    current = next.children;
+  }
+  return { children: current };
+}
+
+(async () => {
+  const files = await fetchFiles();
+  const container = document.getElementById('file-tree');
+  createTree(container, files);
+})();

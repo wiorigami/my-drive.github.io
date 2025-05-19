@@ -1,50 +1,59 @@
-// 获取文件扩展名（不区分大小写）
-function getExtensionIcon(filename) {
-  const match = filename.match(/\.([^.]+)$/);
-  if (match) {
-    const ext = match[1].toLowerCase();
-    return `assets/icons/${ext}.png`;
-  }
-  return `assets/icons/default.png`;
-}
-
-function createTree(items, basePath = 'files/') {
+function createTree(data, path = 'files') {
   const ul = document.createElement('ul');
+  ul.classList.add('tree');
 
-  for (const item of items) {
+  data.forEach(item => {
     const li = document.createElement('li');
 
     if (item.type === 'folder') {
+      li.classList.add('folder');
+
+      const toggle = document.createElement('span');
+      toggle.classList.add('toggle');
+      toggle.textContent = '▶';
+
       const icon = document.createElement('img');
       icon.src = 'assets/icons/folder.png';
-      icon.className = 'icon';
+      icon.style.width = '16px';
+      icon.style.verticalAlign = 'middle';
+      icon.style.marginRight = '4px';
 
+      const name = document.createElement('span');
+      name.textContent = item.name;
+      name.classList.add('name');
+
+      const children = createTree(item.children, path + '/' + item.name);
+      children.classList.add('children', 'hidden');
+
+      toggle.onclick = () => {
+        const expanded = toggle.textContent === '▼';
+        toggle.textContent = expanded ? '▶' : '▼';
+        children.classList.toggle('hidden');
+      };
+
+      li.appendChild(toggle);
       li.appendChild(icon);
-      li.append(' ' + item.name);
-      li.appendChild(createTree(item.children, basePath + item.name + '/'));
-    } else {
+      li.appendChild(name);
+      li.appendChild(children);
+
+    } else if (item.type === 'file') {
       const icon = document.createElement('img');
-      icon.src = getExtensionIcon(item.name);
-      icon.className = 'icon';
+      icon.src = getIconForFile(item.name); // 你可能已有此函数
+      icon.style.width = '16px';
+      icon.style.verticalAlign = 'middle';
+      icon.style.marginRight = '4px';
 
       const link = document.createElement('a');
-      link.href = basePath + item.name;
-      link.textContent = ' ' + item.name;
-      link.setAttribute('download', ''); // 直接下载
+      link.href = path + '/' + item.name;
+      link.textContent = item.name;
+      link.setAttribute('download', '');
 
       li.appendChild(icon);
       li.appendChild(link);
     }
 
     ul.appendChild(li);
-  }
+  });
 
   return ul;
 }
-
-fetch('assets/files.json')
-  .then(res => res.json())
-  .then(data => {
-    const container = document.getElementById('file-tree');
-    container.appendChild(createTree(data));
-  });

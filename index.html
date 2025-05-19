@@ -1,13 +1,136 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>My Drive</title>
-  <link rel="stylesheet" href="assets/style.css">
+  <title>My GitHub Drive</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2em;
+      background: #f8f9fa;
+    }
+    .tree {
+      list-style: none;
+      padding-left: 1em;
+    }
+    .tree li {
+      margin: 0.25em 0;
+      line-height: 1.5;
+    }
+    .tree .toggle {
+      cursor: pointer;
+      margin-right: 0.4em;
+      user-select: none;
+      display: inline-block;
+      width: 1em;
+    }
+    .tree .children.hidden {
+      display: none;
+    }
+    img.icon {
+      width: 16px;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+    a {
+      text-decoration: none;
+      color: #007bff;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-  <h1>📁 My Drive</h1>
-  <div id="file-tree"></div>
-  <script src="assets/script.js"></script>
+  <h1>📁 My GitHub Drive</h1>
+  <div id="file-tree">加载中...</div>
+
+  <script>
+    function getIconForFile(filename) {
+      const ext = filename.split('.').pop().toLowerCase();
+      const iconMap = {
+        'jpg': 'image.png',
+        'jpeg': 'image.png',
+        'png': 'image.png',
+        'gif': 'image.png',
+        'pdf': 'pdf.png',
+        'zip': 'archive.png',
+        'rar': 'archive.png',
+        '7z': 'archive.png',
+        'txt': 'text.png',
+        'md': 'text.png'
+      };
+      return 'assets/icons/' + (iconMap[ext] || 'file.png');
+    }
+
+    function createTree(data, path = 'files') {
+      const ul = document.createElement('ul');
+      ul.classList.add('tree');
+
+      data.forEach(item => {
+        const li = document.createElement('li');
+
+        if (item.type === 'folder') {
+          li.classList.add('folder');
+
+          const toggle = document.createElement('span');
+          toggle.classList.add('toggle');
+          toggle.textContent = '▶';
+
+          const icon = document.createElement('img');
+          icon.src = 'assets/icons/folder.png';
+          icon.className = 'icon';
+
+          const name = document.createElement('span');
+          name.textContent = item.name;
+          name.classList.add('name');
+
+          const children = createTree(item.children, path + '/' + item.name);
+          children.classList.add('children', 'hidden');
+
+          toggle.onclick = () => {
+            const expanded = toggle.textContent === '▼';
+            toggle.textContent = expanded ? '▶' : '▼';
+            children.classList.toggle('hidden');
+          };
+
+          li.appendChild(toggle);
+          li.appendChild(icon);
+          li.appendChild(name);
+          li.appendChild(children);
+
+        } else if (item.type === 'file') {
+          const icon = document.createElement('img');
+          icon.src = getIconForFile(item.name);
+          icon.className = 'icon';
+
+          const link = document.createElement('a');
+          link.href = path + '/' + item.name;
+          link.textContent = item.name;
+          link.setAttribute('download', '');
+
+          li.appendChild(document.createElement('span')).className = 'toggle'; // 保持结构对齐
+          li.appendChild(icon);
+          li.appendChild(link);
+        }
+
+        ul.appendChild(li);
+      });
+
+      return ul;
+    }
+
+    fetch('assets/files.json')
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById('file-tree');
+        container.innerHTML = ''; // 清空“加载中...”
+        const tree = createTree(data);
+        container.appendChild(tree);
+      })
+      .catch(err => {
+        document.getElementById('file-tree').textContent = '❌ 加载失败: ' + err;
+      });
+  </script>
 </body>
 </html>
